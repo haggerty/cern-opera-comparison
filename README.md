@@ -57,7 +57,25 @@ A1  = √(a1² + b1²)                      [m=1 amplitude]
 
 The m=0 average of the analysis map is then compared directly with the measured (azimuthally averaged) map.  The m=1 component of the analysis map is used as a diagnostic for solenoid misalignment.
 
-**Step 3 — Misalignment diagnostics**
+**Step 3 — Maxwell residual diagnostics**
+
+For each map the macro evaluates ∇·B and ∇×B numerically on the comparison grid.
+
+*Analysis map*: central finite differences with step h = 2 cm (one grid cell) evaluated at each (r, φ, z) point and averaged over φ:
+
+```
+∇·B  = ∂Bx/∂x + ∂By/∂y + ∂Bz/∂z
+∇×B  = (∂Bz/∂y−∂By/∂z, ∂Bx/∂z−∂Bz/∂x, ∂By/∂x−∂Bx/∂y)
+```
+
+*Measured map*: cylindrical identities evaluated on the internal (r, z) grid:
+
+```
+∇·B      = (1/r)∂(rBr)/∂r + ∂Bz/∂z
+(∇×B)_φ  = ∂Br/∂z − ∂Bz/∂r
+```
+
+**Step 4 — Misalignment diagnostics**
 
 A solenoid tilted by angle θ around the x-axis produces a first-harmonic modulation in Bz with:
 
@@ -89,6 +107,21 @@ This is the signature of a rigid-body tilt.  The implied effective tilt is **~4.
 
 For comparison, the physical sPHENIX solenoid was surveyed to be tilted **2.39 mrad** toward **+y** (phase +71°) — roughly opposite in direction.  The calculated (OPERA) field does not appear to incorporate the survey-measured tilt.
 
+### Maxwell residuals
+
+The macro evaluates ∇·B and ∇×B numerically for each map at all (r > 0) points in the tracking volume.
+
+| Map | |∇·B| max | |∇·B| RMS | |∇×B| max | |∇×B| RMS |
+|-----|-----------|-----------|-----------|-----------|
+| Measured | 0.017 mT/cm | 0.003 mT/cm | 0.302 mT/cm | 0.065 mT/cm |
+| Analysis (OPERA) | 334 mT/cm | 43 mT/cm | 35 mT/cm | 2.6 mT/cm |
+
+**Measured map**: ∇·B ≈ 0 to better than 0.02 mT/cm — consistent with machine precision — confirming that `EnforceMaxwell()` enforces the divergence condition correctly on the discrete grid.  The non-zero curl (max 0.3 mT/cm, RMS 0.065 mT/cm) is real: the measured Bz contains field structure that is not curl-free at the ~0.05% level, from a combination of measurement noise and genuine field non-idealities.
+
+**Analysis map**: The large divergence (max 334 mT/cm, RMS 43 mT/cm) is a direct consequence of storing Bx, By, Bz as three **independent** trilinear grids.  Trilinear interpolation of each component separately imposes no constraint coupling them, so ∇·B ≠ 0 wherever the field curvature is significant.  As a cross-check, the curl is much smaller (max 35 mT/cm, RMS 2.6 mT/cm), consistent with the OPERA FEM solution respecting ∇×B = 0 before discretisation.  The divergence violation means the stored analysis map is not a valid Maxwell field; it violates ∇·B = 0 at the ~3% level relative to the natural scale ∂Bz/∂z ~ 1.4 T / 2 cm ≈ 700 mT/cm.
+
+The practical implication is that tracking through the analysis field map accumulates a systematic error proportional to the divergence residual.  A divergence-free representation (e.g., storing a vector potential, or post-processing the stored grid to enforce ∇·B = 0 via the same integral method used for the measured map) would reduce this error.
+
 ## How to Run
 
 ### Prerequisites
@@ -108,7 +141,7 @@ mkdir -p plots
 root -l -b -q 'compareFieldMaps.C+'
 ```
 
-Output: ten PDF plots in `plots/` and `plots/comparison_histograms.root`.
+Output: eleven PDF plots in `plots/` and `plots/comparison_histograms.root`.
 
 ### Output plots
 
@@ -124,6 +157,7 @@ Output: ten PDF plots in `plots/` and `plots/comparison_histograms.root`.
 | `08_Bz_radial_profiles.pdf` | Bz radial profiles at selected z slices |
 | `09_phi_dependence_r30_z0.pdf` | φ dependence at r=30 cm, z=0 |
 | `10_dBz_phi0_vs_phi180.pdf` | ΔBz at φ=0° vs φ=180° (asymmetry check) |
+| `11_maxwell_residuals.pdf` | ∇·B and ∇×B residuals for both maps |
 
 ## Repository Structure
 
