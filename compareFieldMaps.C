@@ -260,6 +260,10 @@ void compareFieldMaps()
     double dBz[NR][NZ], dBr[NR][NZ];
     double Bz_A1[NR][NZ], Br_A1[NR][NZ], Bp_A1[NR][NZ];
     double Bz_ph[NR][NZ], Bp_ph[NR][NZ];
+    double divB_calc [NR][NZ] = {};   // |∇·B|   analysis,  azimuthal mean [T/cm]
+    double curlB_calc[NR][NZ] = {};   // |∇×B|   analysis,  azimuthal mean [T/cm]
+    double divB_meas [NR][NZ] = {};   // |∇·B|   measured,  cylindrical    [T/cm]
+    double curlB_meas[NR][NZ] = {};   // |(∇×B)φ| measured, cylindrical    [T/cm]
 
     double maxdBz=0., maxdBr=0., maxBp_m0=0.;
     double maxBz_A1=0., maxBr_A1=0., maxBp_A1=0.;
@@ -280,6 +284,91 @@ void compareFieldMaps()
             maxBr_A1= std::max(maxBr_A1,Br_A1[ir][iz]);
             maxBp_A1= std::max(maxBp_A1,Bp_A1[ir][iz]);
         }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // 5b. Maxwell residuals
+    //
+    // Analysis map: |∇·B| and |∇×B| via central differences (step = DX_C = 2 cm),
+    //   evaluated on the comparison cylindrical grid and averaged over phi.
+    //
+    // Measured map: cylindrical identities on the internal (r,z) grid.
+    //   ∇·B  = (1/r)∂(rBr)/∂r + ∂Bz/∂z
+    //   (∇×B)φ = ∂Br/∂z − ∂Bz/∂r
+    //   Grid steps DR_MM=25 mm, DZ_MM=20 mm → convert to cm for T/cm units.
+    // ─────────────────────────────────────────────────────────────────────────
+    printf("=== Computing Maxwell residuals ===\n");
+
+    // ── Analysis map ──────────────────────────────────────────────────────────
+    {
+        const float h     = DX_C;          // 2 cm = 1 grid step
+        const float inv2h = 1.f/(2.f*h);
+        for (int ir = 0; ir < NR; ++ir) {
+            float r = (float)(ir * DR);
+            for (int ip = 0; ip < NP; ++ip) {
+                double phi = ip * (TMath::TwoPi()/NP);
+                float  xq  = r*(float)std::cos(phi);
+                float  yq  = r*(float)std::sin(phi);
+                for (int iz = 0; iz < NZ; ++iz) {
+                    float zq = (float)(Z0 + iz*DZ);
+                    float Bx_xp,By_xp,Bz_xp, Bx_xm,By_xm,Bz_xm;
+                    float Bx_yp,By_yp,Bz_yp, Bx_ym,By_ym,Bz_ym;
+                    float Bx_zp,By_zp,Bz_zp, Bx_zm,By_zm,Bz_zm;
+                    CalcInterp(xq+h,yq,  zq,  Bx_xp,By_xp,Bz_xp);
+                    CalcInterp(xq-h,yq,  zq,  Bx_xm,By_xm,Bz_xm);
+                    CalcInterp(xq,  yq+h,zq,  Bx_yp,By_yp,Bz_yp);
+                    CalcInterp(xq,  yq-h,zq,  Bx_ym,By_ym,Bz_ym);
+                    CalcInterp(xq,  yq,  zq+h,Bx_zp,By_zp,Bz_zp);
+                    CalcInterp(xq,  yq,  zq-h,Bx_zm,By_zm,Bz_zm);
+                    double divB = (double(Bx_xp-Bx_xm)+double(By_yp-By_ym)
+                                  +double(Bz_zp-Bz_zm))*inv2h;
+                    double cBx  = (double(Bz_yp-Bz_ym)-double(By_zp-By_zm))*inv2h;
+                    double cBy  = (double(Bx_zp-Bx_zm)-double(Bz_xp-Bz_xm))*inv2h;
+                    double cBz  = (double(By_xp-By_xm)-double(Bx_yp-Bx_ym))*inv2h;
+                    divB_calc [ir][iz] += std::abs(divB);
+                    curlB_calc[ir][iz] += std::sqrt(cBx*cBx+cBy*cBy+cBz*cBz);
+                }
+            }
+        }
+        for (int ir = 0; ir < NR; ++ir)
+            for (int iz = 0; iz < NZ; ++iz) {
+                divB_calc [ir][iz] /= NP;
+                curlB_calc[ir][iz] /= NP;
+            }
+    }
+
+    // ── Measured map (cylindrical, internal grid) ─────────────────────────────
+    {
+        const double DR_cm  = DR_MM * 0.1;    // 25 mm → 2.5 cm
+        const double DZ_cm  = DZ_MM * 0.1;    // 20 mm → 2.0 cm
+        const double inv2DZ = 1.0/(2.0*DZ_cm);
+        for (int ir = 0; ir < NR; ++ir) {
+            int    ir_m = ir;              // 1:1 mapping (same 25-mm step)
+            double r_cm = ir_m * DR_cm;
+            for (int iz = 0; iz < NZ; ++iz) {
+                int iz_m = IZ0 + iz;
+                // iz_m in [80,190]: always interior, guards below are safety only
+                if (iz_m < 1 || iz_m >= NZ_M-1) continue;
+
+                double dBz_dz = (bz_m[ir_m][iz_m+1]-bz_m[ir_m][iz_m-1])*inv2DZ;
+
+                double dRBr_dr_over_r;
+                if (ir_m == 0) {
+                    // On axis Br=0; L'Hôpital: (1/r)∂(rBr)/∂r → 2·∂Br/∂r
+                    dRBr_dr_over_r = 2.0*br_m[1][iz_m]/DR_cm;
+                } else {
+                    double rp = (ir_m+1)*DR_cm, rm_r = (ir_m-1)*DR_cm;
+                    dRBr_dr_over_r = (rp*br_m[ir_m+1][iz_m]-rm_r*br_m[ir_m-1][iz_m])
+                                     /(r_cm*2.0*DR_cm);
+                }
+                divB_meas[ir][iz] = std::abs(dRBr_dr_over_r+dBz_dz);
+
+                double dBr_dz = (br_m[ir_m][iz_m+1]-br_m[ir_m][iz_m-1])*inv2DZ;
+                double dBz_dr = (ir_m > 0 && ir_m < NR_M-1)
+                    ? (bz_m[ir_m+1][iz_m]-bz_m[ir_m-1][iz_m])/(2.0*DR_cm) : 0.;
+                curlB_meas[ir][iz] = std::abs(dBr_dz-dBz_dr);
+            }
+        }
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // 6. Fill TH2F histograms  (x-axis = z, y-axis = r)
@@ -304,7 +393,11 @@ void compareFieldMaps()
     TH2F *hBz_A1h  = MH2("hBz_A1",  "Bz  m=1 amplitude [mT];z (cm);r (cm)");
     TH2F *hBr_A1h  = MH2("hBr_A1",  "Br  m=1 amplitude [mT];z (cm);r (cm)");
     TH2F *hBp_ph   = MH2("hBp_ph",  "B#phi  m=1 phase [deg];z (cm);r (cm)");
-    TH2F *hBz_ph_h = MH2("hBz_ph",  "Bz  m=1 phase [deg];z (cm);r (cm)");
+    TH2F *hBz_ph_h    = MH2("hBz_ph",      "Bz  m=1 phase [deg];z (cm);r (cm)");
+    TH2F *hDivB_calc  = MH2("hDivB_calc",  "Analysis |#nablaB| [mT/cm];z (cm);r (cm)");
+    TH2F *hCurlB_calc = MH2("hCurlB_calc", "Analysis |#nabla#timesB| [mT/cm];z (cm);r (cm)");
+    TH2F *hDivB_meas  = MH2("hDivB_meas",  "Measured |#nablaB| [mT/cm];z (cm);r (cm)");
+    TH2F *hCurlB_meas = MH2("hCurlB_meas", "Measured |(#nabla#timesB)_{#phi}| [mT/cm];z (cm);r (cm)");
 
     for (int ir = 0; ir < NR; ++ir)
         for (int iz = 0; iz < NZ; ++iz) {
@@ -323,7 +416,11 @@ void compareFieldMaps()
             // Phase: set to 0 in low-amplitude cells (will be visually ambiguous
             // in those regions, but amplitude plots are shown alongside)
             hBp_ph  ->SetBinContent(bx, by, Bp_ph[ir][iz]);
-            hBz_ph_h->SetBinContent(bx, by, Bz_ph[ir][iz]);
+            hBz_ph_h   ->SetBinContent(bx, by, Bz_ph[ir][iz]);
+            hDivB_calc ->SetBinContent(bx, by, divB_calc [ir][iz]*1e3);
+            hCurlB_calc->SetBinContent(bx, by, curlB_calc[ir][iz]*1e3);
+            hDivB_meas ->SetBinContent(bx, by, divB_meas [ir][iz]*1e3);
+            hCurlB_meas->SetBinContent(bx, by, curlB_meas[ir][iz]*1e3);
         }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -554,6 +651,20 @@ void compareFieldMaps()
         delete hdBz0; delete hdBz180;
     }
 
+    // ── 11. Maxwell residuals ─────────────────────────────────────────────────
+    // Top row: analysis map |∇·B| and |∇×B| (both should be ~0 for OPERA solution)
+    // Bottom row: measured map |∇·B| (zero by construction) and |(∇×B)_φ| (not enforced)
+    {
+        gStyle->SetPalette(kViridis);
+        TCanvas *c = new TCanvas("c11", "", 1400, 900);
+        c->Divide(2, 2);
+        c->cd(1); hDivB_calc ->Draw("COLZ");
+        c->cd(2); hCurlB_calc->Draw("COLZ");
+        c->cd(3); hDivB_meas ->Draw("COLZ");
+        c->cd(4); hCurlB_meas->Draw("COLZ");
+        SaveClose(c, "plots/11_maxwell_residuals.pdf");
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // 8. Save all histograms to a ROOT file
     // ─────────────────────────────────────────────────────────────────────────
@@ -563,6 +674,8 @@ void compareFieldMaps()
     hBp_m0->Write();   hBp_A1->Write();   hBp_ph->Write();
     hBz_A1h->Write();  hBz_ph_h->Write();
     hBr_A1h->Write();
+    hDivB_calc->Write(); hCurlB_calc->Write();
+    hDivB_meas->Write(); hCurlB_meas->Write();
     fOut->Close();
     printf("  -> plots/comparison_histograms.root\n");
 
@@ -602,6 +715,37 @@ void compareFieldMaps()
                    mean_ph, spread, n);
             printf("  Small spread => consistent with single tilt/offset direction\n");
         }
+    }
+
+    // Maxwell residual statistics (r > 0 to skip trivially-zero axis)
+    {
+        double maxDivC=0., maxCurlC=0., maxDivM=0., maxCurlM=0.;
+        double rmssDivC=0., rmssCurlC=0., rmssDivM=0., rmssCurlM=0.;
+        int n = 0;
+        for (int ir = 1; ir < NR; ++ir)
+            for (int iz = 0; iz < NZ; ++iz) {
+                maxDivC  = std::max(maxDivC,  divB_calc [ir][iz]);
+                maxCurlC = std::max(maxCurlC, curlB_calc[ir][iz]);
+                maxDivM  = std::max(maxDivM,  divB_meas [ir][iz]);
+                maxCurlM = std::max(maxCurlM, curlB_meas[ir][iz]);
+                rmssDivC  += divB_calc [ir][iz]*divB_calc [ir][iz];
+                rmssCurlC += curlB_calc[ir][iz]*curlB_calc[ir][iz];
+                rmssDivM  += divB_meas [ir][iz]*divB_meas [ir][iz];
+                rmssCurlM += curlB_meas[ir][iz]*curlB_meas[ir][iz];
+                ++n;
+            }
+        double sc = 1e3/std::sqrt((double)n);   // T/cm → mT/cm, /sqrt(n)
+        printf("\n  Maxwell residuals (r > 0, tracking volume):\n");
+        printf("  Analysis  |div B|:        max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
+               maxDivC*1e3,  std::sqrt(rmssDivC )*sc);
+        printf("  Analysis  |curl B|:       max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
+               maxCurlC*1e3, std::sqrt(rmssCurlC)*sc);
+        printf("  Measured  |div B|:        max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
+               maxDivM*1e3,  std::sqrt(rmssDivM )*sc);
+        printf("  Measured  |(curl B)_phi|: max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
+               maxCurlM*1e3, std::sqrt(rmssCurlM)*sc);
+        printf("  (Analysis step = %.0f cm; Measured step DR=%.1f cm, DZ=%.1f cm)\n",
+               (double)DX_C, DR_MM*0.1, DZ_MM*0.1);
     }
 
     // Clean up
