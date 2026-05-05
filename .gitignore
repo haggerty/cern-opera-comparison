@@ -1,0 +1,14 @@
+# ROOT ACLiC build artifacts
+*.so
+*.d
+*.pcm
+
+# Large data files (not tracked in git)
+fieldmap-used-in-analysis/*.root
+
+# Output ROOT files from the comparison
+plots/*.root
+
+# macOS metadata
+.DS_Store
+._*

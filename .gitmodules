@@ -1,0 +1,3 @@
+[submodule "sphenix-cernfinal-map"]
+	path = sphenix-cernfinal-map
+	url = https://github.com/haggerty/sphenix-cernfinal-map.git
