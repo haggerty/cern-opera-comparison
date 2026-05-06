@@ -10,9 +10,9 @@
 // Run from the project directory:
 //   root -l -b -q 'compareFieldMaps.C+'
 //
-// Major question: is the measured field consistent with the calculated
+// Major question: is the measured field consistent with the OPERA
 // solenoid field after a small rigid-body translation and/or rotation?
-// Method: decompose (Bz_calc − Bz_meas), (Br_calc − Br_meas), and Bφ_calc
+// Method: decompose (Bz_OPERA − Bz_meas), (Br_OPERA − Br_meas), and Bφ_OPERA
 // into azimuthal Fourier modes.  A dominant m=1 signal with a phase that is
 // CONSTANT across (r, z) is the signature of a rigid-body misalignment.
 
@@ -53,7 +53,7 @@ static float *gCalcBz = nullptr;
 inline int Cidx(int ix, int iy, int iz)
 { return ix * NYC*NZC + iy * NZC + iz; }
 
-// ─── Trilinear interpolation of the analysis map ─────────────────────────────
+// ─── Trilinear interpolation of the OPERA map ────────────────────────────────
 // Returns false (and zeros) if the point is outside the grid.
 bool CalcInterp(float xq, float yq, float zq,
                 float &Bx, float &By, float &Bz)
@@ -219,7 +219,7 @@ void compareFieldMaps()
     //   For a tilted/offset solenoid the m=1 phase phi1 = atan2(b1,a1)
     //   should be the SAME everywhere in (r, z).
     // ─────────────────────────────────────────────────────────────────────────
-    printf("=== Evaluating analysis map on %d r x %d phi x %d z points ===\n",
+    printf("=== Evaluating OPERA map on %d r x %d phi x %d z points ===\n",
            NR, NP, NZ);
 
     // Result 2-D arrays [ir][iz]
@@ -383,19 +383,19 @@ void compareFieldMaps()
     };
 
     TH2F *hBz_meas = MH2("hBz_meas", "Measured Bz;z (cm);r (cm)");
-    TH2F *hBz_calc = MH2("hBz_calc", "Analysis Bz  #phi-avg;z (cm);r (cm)");
-    TH2F *hdBz     = MH2("hdBz",     "#DeltaBz (Analysis #minus Measured) [mT];z (cm);r (cm)");
+    TH2F *hBz_calc = MH2("hBz_calc", "OPERA Bz (#phi-avg);z (cm);r (cm)");
+    TH2F *hdBz     = MH2("hdBz",     "#DeltaBz (OPERA #minus Measured) [mT];z (cm);r (cm)");
     TH2F *hBr_meas = MH2("hBr_meas", "Measured Br;z (cm);r (cm)");
-    TH2F *hBr_calc = MH2("hBr_calc", "Analysis Br  #phi-avg;z (cm);r (cm)");
-    TH2F *hdBr     = MH2("hdBr",     "#DeltaBr (Analysis #minus Measured) [mT];z (cm);r (cm)");
+    TH2F *hBr_calc = MH2("hBr_calc", "OPERA Br (#phi-avg);z (cm);r (cm)");
+    TH2F *hdBr     = MH2("hdBr",     "#DeltaBr (OPERA #minus Measured) [mT];z (cm);r (cm)");
     TH2F *hBp_m0   = MH2("hBp_m0",  "B#phi  #phi-mean [mT];z (cm);r (cm)");
     TH2F *hBp_A1   = MH2("hBp_A1",  "B#phi  m=1 amplitude [mT];z (cm);r (cm)");
     TH2F *hBz_A1h  = MH2("hBz_A1",  "Bz  m=1 amplitude [mT];z (cm);r (cm)");
     TH2F *hBr_A1h  = MH2("hBr_A1",  "Br  m=1 amplitude [mT];z (cm);r (cm)");
     TH2F *hBp_ph   = MH2("hBp_ph",  "B#phi  m=1 phase [deg];z (cm);r (cm)");
     TH2F *hBz_ph_h    = MH2("hBz_ph",      "Bz  m=1 phase [deg];z (cm);r (cm)");
-    TH2F *hDivB_calc  = MH2("hDivB_calc",  "Analysis |#nablaB| [mT/cm];z (cm);r (cm)");
-    TH2F *hCurlB_calc = MH2("hCurlB_calc", "Analysis |#nabla#timesB| [mT/cm];z (cm);r (cm)");
+    TH2F *hDivB_calc  = MH2("hDivB_calc",  "OPERA |#nablaB| [mT/cm];z (cm);r (cm)");
+    TH2F *hCurlB_calc = MH2("hCurlB_calc", "OPERA |#nabla#timesB| [mT/cm];z (cm);r (cm)");
     TH2F *hDivB_meas  = MH2("hDivB_meas",  "Measured |#nablaB| [mT/cm];z (cm);r (cm)");
     TH2F *hCurlB_meas = MH2("hCurlB_meas", "Measured |(#nabla#timesB)_{#phi}| [mT/cm];z (cm);r (cm)");
 
@@ -453,7 +453,7 @@ void compareFieldMaps()
         mg->Draw("A");
         TLegend *leg = new TLegend(0.65, 0.15, 0.88, 0.35);
         leg->AddEntry(gM, "Measured", "l");
-        leg->AddEntry(gC, "Analysis (#phi-avg)", "l");
+        leg->AddEntry(gC, "OPERA (#phi-avg)", "l");
         leg->Draw();
 
         c->cd(2);
@@ -570,7 +570,7 @@ void compareFieldMaps()
             if (s == 0) {
                 TLegend *leg = new TLegend(0.45, 0.7, 0.98, 0.92);
                 leg->AddEntry(gMr, "Measured", "l");
-                leg->AddEntry(gCr, "Analysis #phi-avg", "l");
+                leg->AddEntry(gCr, "OPERA (#phi-avg)", "l");
                 leg->Draw();
             }
         }
@@ -616,7 +616,7 @@ void compareFieldMaps()
             ml->SetLineColor(kBlue); ml->SetLineWidth(2); ml->SetLineStyle(2);
             ml->Draw();
             TLegend *leg = new TLegend(0.58, 0.77, 0.98, 0.92);
-            leg->AddEntry(g,  "Analysis",            "l");
+            leg->AddEntry(g,  "OPERA",               "l");
             leg->AddEntry(ml, "Measured (#phi-avg)", "l");
             leg->Draw();
         };
@@ -652,7 +652,7 @@ void compareFieldMaps()
     }
 
     // ── 11. Maxwell residuals ─────────────────────────────────────────────────
-    // Top row: analysis map |∇·B| and |∇×B| (both should be ~0 for OPERA solution)
+    // Top row: OPERA map |∇·B| and |∇×B| (both should be ~0 for OPERA FEM solution)
     // Bottom row: measured map |∇·B| (zero by construction) and |(∇×B)_φ| (not enforced)
     {
         gStyle->SetPalette(kViridis);
@@ -736,9 +736,9 @@ void compareFieldMaps()
             }
         double sc = 1e3/std::sqrt((double)n);   // T/cm → mT/cm, /sqrt(n)
         printf("\n  Maxwell residuals (r > 0, tracking volume):\n");
-        printf("  Analysis  |div B|:        max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
+        printf("  OPERA     |div B|:        max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
                maxDivC*1e3,  std::sqrt(rmssDivC )*sc);
-        printf("  Analysis  |curl B|:       max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
+        printf("  OPERA     |curl B|:       max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
                maxCurlC*1e3, std::sqrt(rmssCurlC)*sc);
         printf("  Measured  |div B|:        max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
                maxDivM*1e3,  std::sqrt(rmssDivM )*sc);
