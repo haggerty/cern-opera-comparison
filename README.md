@@ -4,7 +4,7 @@ Comparison of the measured sPHENIX solenoid magnetic field map (from CERN accept
 
 ## Data Sources
 
-### Measured map (CERN, 2018)
+### Measured map (CERN, 2022)
 - Repository: [`haggerty/sphenix-cernfinal-map`](https://github.com/haggerty/sphenix-cernfinal-map) (git submodule)
 - Raw data: two CSV files in the surveyor coordinate system
   - Fine map: dense sampling near the solenoid bore
