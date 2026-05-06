@@ -636,7 +636,7 @@ void compareFieldMaps(const char *calcRoot  = nullptr,
             TLine *ml = new TLine(0., measVal, 350., measVal);
             ml->SetLineColor(kBlue); ml->SetLineWidth(2); ml->SetLineStyle(2);
             ml->Draw();
-            TLegend *leg = new TLegend(0.58, 0.77, 0.98, 0.92);
+            TLegend *leg = new TLegend(0.55, 0.08, 0.97, 0.23);
             leg->AddEntry(g,  LABEL,                  "l");
             leg->AddEntry(ml, "Measured (#phi-avg)", "l");
             leg->Draw();
