@@ -624,10 +624,11 @@ void compareFieldMaps(const char *calcRoot  = nullptr,
             g->Draw("AL");
             // Expand y-axis to include measVal if it falls outside the auto-scaled range
             TH1F *axh = g->GetHistogram();
-            double ylo = axh->GetMinimum(), yhi = axh->GetMaximum();
+            double ylo = std::min(axh->GetMinimum(), measVal);
+            double yhi = std::max(axh->GetMaximum(), measVal);
             double ymargin = 0.15 * (yhi - ylo);
-            if (measVal < ylo) axh->SetMinimum(measVal - ymargin);
-            if (measVal > yhi) axh->SetMaximum(measVal + ymargin);
+            axh->SetMinimum(ylo - ymargin);
+            axh->SetMaximum(yhi + ymargin);
             g->Draw("AL");  // redraw with updated axis
             TLine *ml = new TLine(0., measVal, 350., measVal);
             ml->SetLineColor(kBlue); ml->SetLineWidth(2); ml->SetLineStyle(2);
