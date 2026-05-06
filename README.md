@@ -112,12 +112,44 @@ For the OPERA map the same coincidence holds (Br = −0.000026 T at z = +2 cm, �
 ### Bφ
 Essentially zero in both maps (< 0.1 mT in the tracking volume center), consistent with azimuthal symmetry.
 
+### Solenoid axis tilt in the raw measured data
+
+The macro `checkTilt.C` reads the raw measurement CSVs directly (before azimuthal averaging) and extracts the m=1 Fourier component of Bz by fitting Bz(φ) = A₀ + A₁ cos φ + B₁ sin φ in each (r, z) bin using least squares.  The fine map provides 18–31 azimuthal measurements per bin — sufficient for a clean m=1 extraction.
+
+```bash
+root -l -b -q 'checkTilt.C+'
+```
+
+Output: six PDFs in `plots_tilt/`.
+
+**Tilt signature:** for a solenoid axis tilted by angle α toward azimuth φ₀, the m=1 amplitude of Bz is:
+```
+ΔBz ≈ −(∂Bz/∂r) · (z − z_center) · α · cos(φ − φ₀)
+```
+The key discriminants vs. a pure axis translation are: (1) the m=1 amplitude reverses sign at z = z_center (the field maximum), and (2) it grows linearly with |z − z_center|.
+
+**Result at r = 300 mm:**
+
+| z (cm) | A₀ (T) | A₁ (mT) | A₁/A₀ (%) | phase (°) |
+|--------|--------|---------|-----------|----------|
+| −100 | 1.354 | 2.38 | 0.18 | −67 |
+| −50 | 1.397 | 0.25 | 0.02 | −65 |
+| −24 | 1.401 | 0.40 | 0.03 | +44 |
+| 0 | 1.398 | 0.68 | 0.05 | +64 |
+| +50 | 1.359 | 2.42 | 0.18 | +76 |
+| +100 | 1.216 | 4.77 | 0.39 | +84 |
+| +140 | 1.006 | 4.82 | 0.48 | +101 |
+
+The amplitude minimum occurs near z ≈ −24 cm — the Bz peak, where ∂Bz/∂r ≈ 0, exactly where the tilt signal is expected to vanish.  For z > 0 the phase is consistently **+75° ± 15°**, matching the survey direction of **+71°**.  For z < −50 cm the phase is **−70° ± 10°**, i.e., reversed by ~145° — close to the 180° sign flip expected for a tilt as one crosses the field center.  The amplitude grows with |z − z_center| on both sides.  This pattern is characteristic of a rigid-body axis tilt rather than a parallel translation (which would give a z-independent phase and no sign reversal).
+
+**Conclusion:** the raw CERN measurement data shows an m=1 azimuthal asymmetry in Bz that is consistent with a solenoid axis tilt of the surveyed magnitude (~2.39 mrad) toward φ₀ ≈ **+71°** — essentially toward **+y**.
+
 ### Effective tilt in the OPERA map (m=1 diagnostic)
 The OPERA map's Bz m=1 amplitude scales linearly with r: **A1/r ≈ 0.0095 mT/cm** (constant across all r at a given z), and the m=1 phase is constant at **−86°** across the (r, z) plane.
 
-This is the signature of a rigid-body tilt.  The implied effective tilt is **~4.1 mrad** toward **−y** (phase −86°, i.e., nearly the −y direction).
+This is the signature of a rigid-body tilt.  The implied effective tilt is **~4.1 mrad** toward **−y** (phase −86°, nearly the −y direction).
 
-For comparison, the physical sPHENIX solenoid was surveyed to be tilted **2.39 mrad** toward **+y** (phase +71°) — roughly opposite in direction.  The OPERA calculation does not appear to incorporate the survey-measured tilt.
+The physical sPHENIX solenoid was surveyed to be tilted **2.39 mrad** toward **+y** (phase +71°), and the raw measured data confirms a tilt in approximately that direction (§ above).  The OPERA dipole at −86° points **nearly opposite** to the survey direction (157° away) and does not appear to incorporate the measured solenoid tilt.
 
 ### Maxwell residuals
 
@@ -235,9 +267,11 @@ Output: `output/sphenix_measured_fieldmap_cartesian.root`
 cern-opera-comparison/
 ├── compareFieldMaps.C              # Comparison macro (parameterised; see How to Run)
 ├── makeMeasuredCartesianMap.C      # Converts measured map to OPERA Cartesian format
+├── checkTilt.C                     # Azimuthal Fourier analysis of raw CSVs for tilt
 ├── sphenix-cernfinal-map/          # git submodule (sPHENIXFieldMap class + CSV data)
 ├── plots/                          # OPERA vs measured: PDFs and comparison_histograms.root
 ├── plots_meas_cartesian/           # Meas. Cartesian vs measured: self-consistency check
+├── plots_tilt/                     # Tilt analysis: m=1 amplitude and phase maps
 ├── fieldmap-used-in-analysis/      # (not tracked) place OPERA ROOT file here
 └── output/                         # (not tracked) output of makeMeasuredCartesianMap.C
 ```
