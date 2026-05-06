@@ -619,6 +619,8 @@ void compareFieldMaps(const char *calcRoot  = nullptr,
         auto DrawPhi = [&](int pad, TGraph *g, double measVal,
                            const char *yl) {
             c->cd(pad);
+            gPad->SetLeftMargin(0.17);
+            gPad->SetRightMargin(0.04);
             g->SetTitle(Form("%s vs #phi  (r=%.0f cm, z=%.0f cm);#phi (deg);%s",
                              yl, R_SAMP, Z_SAMP, yl));
             g->Draw("AL");
@@ -629,6 +631,7 @@ void compareFieldMaps(const char *calcRoot  = nullptr,
             double ymargin = 0.15 * (yhi - ylo);
             axh->SetMinimum(ylo - ymargin);
             axh->SetMaximum(yhi + ymargin);
+            axh->GetYaxis()->SetTitleOffset(1.6);
             g->Draw("AL");  // redraw with updated axis
             TLine *ml = new TLine(0., measVal, 350., measVal);
             ml->SetLineColor(kBlue); ml->SetLineWidth(2); ml->SetLineStyle(2);
