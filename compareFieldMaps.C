@@ -562,10 +562,14 @@ void compareFieldMaps(const char *calcRoot  = nullptr,
     {
         const int NSZ = 5;
         double zsamp[NSZ] = {0., 50., 100., -50., -100.};
-        TCanvas *c = new TCanvas("c08", "", 1800, 420);
+        TCanvas *c = new TCanvas("c08", "", 1800, 530);
         c->Divide(NSZ, 1);
         for (int s = 0; s < NSZ; ++s) {
             c->cd(s+1);
+            gPad->SetLeftMargin(0.17);
+            gPad->SetRightMargin(0.04);
+            gPad->SetTopMargin(0.22);
+            gPad->SetBottomMargin(0.13);
             int iz_s = (int)std::lround((zsamp[s] - Z0)/DZ);
             TGraph *gMr = new TGraph(NR), *gCr = new TGraph(NR);
             for (int ir = 0; ir < NR; ++ir) {
@@ -574,12 +578,17 @@ void compareFieldMaps(const char *calcRoot  = nullptr,
             }
             gMr->SetLineColor(kBlue); gMr->SetLineWidth(2);
             gCr->SetLineColor(kRed);  gCr->SetLineWidth(2); gCr->SetLineStyle(2);
-            TString ttl = Form("z = %+.0f cm;r (cm);Bz (T)", zsamp[s]);
-            TMultiGraph *mg = new TMultiGraph(Form("mg_r%d", s), ttl);
+            // Suppress built-in title; draw z label in top margin
+            TMultiGraph *mg = new TMultiGraph(Form("mg_r%d", s), ";r (cm);Bz (T)");
             mg->Add(gMr, "L"); mg->Add(gCr, "L");
             mg->Draw("A");
+            mg->GetYaxis()->SetTitleOffset(1.6);
+            TLatex *tt = new TLatex(0.5, 0.92, Form("z = %+.0f cm", zsamp[s]));
+            tt->SetNDC(); tt->SetTextAlign(22); tt->SetTextSize(0.042);
+            tt->SetTextFont(42); tt->Draw();
             if (s == 0) {
-                TLegend *leg = new TLegend(0.45, 0.7, 0.98, 0.92);
+                TLegend *leg = new TLegend(0.17, 0.79, 0.97, 0.91);
+                leg->SetBorderSize(0); leg->SetFillStyle(0); leg->SetTextSize(0.046);
                 leg->AddEntry(gMr, "Measured", "l");
                 leg->AddEntry(gCr, Form("%s (#phi-avg)", LABEL), "l");
                 leg->Draw();
@@ -642,7 +651,8 @@ void compareFieldMaps(const char *calcRoot  = nullptr,
             // Panel label and legend sit in the top margin above the frame
             TLatex *tt = new TLatex(0.5, 0.92,
                 Form("%s vs #phi  (r=%.0f cm, z=%.0f cm)", yl, R_SAMP, Z_SAMP));
-            tt->SetNDC(); tt->SetTextAlign(22); tt->SetTextSize(0.052); tt->Draw();
+            tt->SetNDC(); tt->SetTextAlign(22); tt->SetTextSize(0.042);
+            tt->SetTextFont(42); tt->Draw();
             TLegend *leg = new TLegend(0.17, 0.79, 0.97, 0.91);
             leg->SetBorderSize(0);
             leg->SetFillStyle(0);
