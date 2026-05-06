@@ -114,24 +114,34 @@ void SymZ(TH2F *h, double lim = -1.)
 
 
 // ═════════════════════════════════════════════════════════════════════════════
-void compareFieldMaps()
+// calcRoot  – path to the Cartesian TNtuple to compare against the measured map.
+//             Default: the OPERA file in fieldmap-used-in-analysis/.
+// calcLabel – short name used in histogram titles and legend entries.
+//             Default: "OPERA"
+// outDir    – directory for output PDFs and ROOT file.
+//             Default: "plots"
+void compareFieldMaps(const char *calcRoot  = nullptr,
+                      const char *calcLabel = nullptr,
+                      const char *outDir    = nullptr)
 {
     gROOT->SetBatch(kTRUE);
     gStyle->SetOptStat(0);
     gStyle->SetOptTitle(1);
     gStyle->SetPadRightMargin(0.13);
-    gSystem->mkdir("plots", kTRUE);
 
-    // ── Paths ─────────────────────────────────────────────────────────────────
+    // ── Paths / labels ────────────────────────────────────────────────────────
     const char *FINE_CSV  =
         "/Users/haggerty/sphenix/data/data02/sphenix/MagnetMapping/cernfinal"
         "/fieldMapFineFullField.csv";
     const char *ROUGH_CSV =
         "/Users/haggerty/sphenix/data/data02/sphenix/MagnetMapping/cernfinal"
         "/fieldMapRoughFullField.csv";
-    const char *CALC_ROOT =
+    const char *CALC_ROOT = calcRoot ? calcRoot :
         "fieldmap-used-in-analysis/"
         "8e4d6c3b1660540a658da3a275af2bde_sphenix3dtrackingmapxyz.root";
+    const char *LABEL     = calcLabel ? calcLabel : "OPERA";
+    const char *OUTDIR    = outDir    ? outDir    : "plots";
+    gSystem->mkdir(OUTDIR, kTRUE);
 
     // ─────────────────────────────────────────────────────────────────────────
     // 1. Load measured field map
@@ -383,19 +393,19 @@ void compareFieldMaps()
     };
 
     TH2F *hBz_meas = MH2("hBz_meas", "Measured Bz;z (cm);r (cm)");
-    TH2F *hBz_calc = MH2("hBz_calc", "OPERA Bz (#phi-avg);z (cm);r (cm)");
-    TH2F *hdBz     = MH2("hdBz",     "#DeltaBz (OPERA #minus Measured) [mT];z (cm);r (cm)");
+    TH2F *hBz_calc = MH2("hBz_calc", Form("%s Bz (#phi-avg);z (cm);r (cm)", LABEL));
+    TH2F *hdBz     = MH2("hdBz",     Form("#DeltaBz (%s #minus Measured) [mT];z (cm);r (cm)", LABEL));
     TH2F *hBr_meas = MH2("hBr_meas", "Measured Br;z (cm);r (cm)");
-    TH2F *hBr_calc = MH2("hBr_calc", "OPERA Br (#phi-avg);z (cm);r (cm)");
-    TH2F *hdBr     = MH2("hdBr",     "#DeltaBr (OPERA #minus Measured) [mT];z (cm);r (cm)");
+    TH2F *hBr_calc = MH2("hBr_calc", Form("%s Br (#phi-avg);z (cm);r (cm)", LABEL));
+    TH2F *hdBr     = MH2("hdBr",     Form("#DeltaBr (%s #minus Measured) [mT];z (cm);r (cm)", LABEL));
     TH2F *hBp_m0   = MH2("hBp_m0",  "B#phi  #phi-mean [mT];z (cm);r (cm)");
     TH2F *hBp_A1   = MH2("hBp_A1",  "B#phi  m=1 amplitude [mT];z (cm);r (cm)");
     TH2F *hBz_A1h  = MH2("hBz_A1",  "Bz  m=1 amplitude [mT];z (cm);r (cm)");
     TH2F *hBr_A1h  = MH2("hBr_A1",  "Br  m=1 amplitude [mT];z (cm);r (cm)");
     TH2F *hBp_ph   = MH2("hBp_ph",  "B#phi  m=1 phase [deg];z (cm);r (cm)");
     TH2F *hBz_ph_h    = MH2("hBz_ph",      "Bz  m=1 phase [deg];z (cm);r (cm)");
-    TH2F *hDivB_calc  = MH2("hDivB_calc",  "OPERA |#nablaB| [mT/cm];z (cm);r (cm)");
-    TH2F *hCurlB_calc = MH2("hCurlB_calc", "OPERA |#nabla#timesB| [mT/cm];z (cm);r (cm)");
+    TH2F *hDivB_calc  = MH2("hDivB_calc",  Form("%s |#nablaB| [mT/cm];z (cm);r (cm)", LABEL));
+    TH2F *hCurlB_calc = MH2("hCurlB_calc", Form("%s |#nabla#timesB| [mT/cm];z (cm);r (cm)", LABEL));
     TH2F *hDivB_meas  = MH2("hDivB_meas",  "Measured |#nablaB| [mT/cm];z (cm);r (cm)");
     TH2F *hCurlB_meas = MH2("hCurlB_meas", "Measured |(#nabla#timesB)_{#phi}| [mT/cm];z (cm);r (cm)");
 
@@ -453,16 +463,16 @@ void compareFieldMaps()
         mg->Draw("A");
         TLegend *leg = new TLegend(0.65, 0.15, 0.88, 0.35);
         leg->AddEntry(gM, "Measured", "l");
-        leg->AddEntry(gC, "OPERA (#phi-avg)", "l");
+        leg->AddEntry(gC, Form("%s (#phi-avg)", LABEL), "l");
         leg->Draw();
 
         c->cd(2);
-        gD->SetTitle("On-axis #DeltaBz = Analysis #minus Measured;z (cm);#DeltaBz (mT)");
+        gD->SetTitle(Form("On-axis #DeltaBz = %s #minus Measured;z (cm);#DeltaBz (mT)", LABEL));
         gD->Draw("AL");
         TLine *zl = new TLine(Z0, 0., ZMAX, 0.);
         zl->SetLineStyle(2); zl->SetLineColor(kGray+1); zl->Draw();
 
-        SaveClose(c, "plots/01_onaxis_Bz.pdf");
+        SaveClose(c, Form("%s/01_onaxis_Bz.pdf", OUTDIR));
     }
 
     // ── 02. 2-D Bz maps ───────────────────────────────────────────────────────
@@ -474,7 +484,7 @@ void compareFieldMaps()
         hBz_calc->GetZaxis()->SetRangeUser(-0.1, 1.65);
         c->cd(1); hBz_meas->Draw("COLZ");
         c->cd(2); hBz_calc->Draw("COLZ");
-        SaveClose(c, "plots/02_Bz_2d_maps.pdf");
+        SaveClose(c, Form("%s/02_Bz_2d_maps.pdf", OUTDIR));
     }
 
     // ── 03. ΔBz m=0 ───────────────────────────────────────────────────────────
@@ -483,7 +493,7 @@ void compareFieldMaps()
         SymZ(hdBz);
         TCanvas *c = new TCanvas("c03", "", 950, 500);
         hdBz->Draw("COLZ");
-        SaveClose(c, "plots/03_dBz_m0.pdf");
+        SaveClose(c, Form("%s/03_dBz_m0.pdf", OUTDIR));
     }
 
     // ── 04. Br comparison ─────────────────────────────────────────────────────
@@ -495,7 +505,7 @@ void compareFieldMaps()
         c->cd(1); hBr_meas->Draw("COLZ");
         c->cd(2); hBr_calc->Draw("COLZ");
         c->cd(3); hdBr->Draw("COLZ");
-        SaveClose(c, "plots/04_Br_comparison.pdf");
+        SaveClose(c, Form("%s/04_Br_comparison.pdf", OUTDIR));
     }
 
     // ── 05. m=1 amplitude maps ────────────────────────────────────────────────
@@ -509,7 +519,7 @@ void compareFieldMaps()
         c->cd(3); hBp_A1->Draw("COLZ");
         c->SetTitle("m=1 amplitudes: constant phase across (r,z) "
                     "=> rigid-body misalignment");
-        SaveClose(c, "plots/05_m1_amplitudes.pdf");
+        SaveClose(c, Form("%s/05_m1_amplitudes.pdf", OUTDIR));
     }
 
     // ── 06. m=1 phase maps (amplitude + phase side by side) ───────────────────
@@ -532,7 +542,7 @@ void compareFieldMaps()
         hBz_ph_h->GetZaxis()->SetRangeUser(-180., 180.);
         c->cd(4); hBz_ph_h->Draw("COLZ");
 
-        SaveClose(c, "plots/06_m1_amplitude_and_phase.pdf");
+        SaveClose(c, Form("%s/06_m1_amplitude_and_phase.pdf", OUTDIR));
     }
 
     // ── 07. Bphi overview (m=0 mean and m=1 amplitude) ────────────────────────
@@ -544,7 +554,7 @@ void compareFieldMaps()
         c->cd(1); hBp_m0->Draw("COLZ");
         gStyle->SetPalette(kViridis);
         c->cd(2); hBp_A1->Draw("COLZ");
-        SaveClose(c, "plots/07_Bphi_overview.pdf");
+        SaveClose(c, Form("%s/07_Bphi_overview.pdf", OUTDIR));
     }
 
     // ── 08. Bz radial profiles at selected z values ───────────────────────────
@@ -570,11 +580,11 @@ void compareFieldMaps()
             if (s == 0) {
                 TLegend *leg = new TLegend(0.45, 0.7, 0.98, 0.92);
                 leg->AddEntry(gMr, "Measured", "l");
-                leg->AddEntry(gCr, "OPERA (#phi-avg)", "l");
+                leg->AddEntry(gCr, Form("%s (#phi-avg)", LABEL), "l");
                 leg->Draw();
             }
         }
-        SaveClose(c, "plots/08_Bz_radial_profiles.pdf");
+        SaveClose(c, Form("%s/08_Bz_radial_profiles.pdf", OUTDIR));
     }
 
     // ── 09. Field vs phi at a sample tracking point (r=30 cm, z=0) ───────────
@@ -616,14 +626,14 @@ void compareFieldMaps()
             ml->SetLineColor(kBlue); ml->SetLineWidth(2); ml->SetLineStyle(2);
             ml->Draw();
             TLegend *leg = new TLegend(0.58, 0.77, 0.98, 0.92);
-            leg->AddEntry(g,  "OPERA",               "l");
+            leg->AddEntry(g,  LABEL,                  "l");
             leg->AddEntry(ml, "Measured (#phi-avg)", "l");
             leg->Draw();
         };
         DrawPhi(1, gBzP, bz_m[ir_s][IZ0+iz_s], "Bz (T)");
         DrawPhi(2, gBrP, br_m[ir_s][IZ0+iz_s], "Br (T)");
         DrawPhi(3, gBpP, 0.,                    "B#phi (T)");
-        SaveClose(c, "plots/09_phi_dependence_r30_z0.pdf");
+        SaveClose(c, Form("%s/09_phi_dependence_r30_z0.pdf", OUTDIR));
     }
 
     // ── 10. ΔBz at phi=0 versus phi=180 deg ───────────────────────────────────
@@ -647,7 +657,7 @@ void compareFieldMaps()
         c->Divide(2, 1);
         c->cd(1); hdBz0->Draw("COLZ");
         c->cd(2); hdBz180->Draw("COLZ");
-        SaveClose(c, "plots/10_dBz_phi0_vs_phi180.pdf");
+        SaveClose(c, Form("%s/10_dBz_phi0_vs_phi180.pdf", OUTDIR));
         delete hdBz0; delete hdBz180;
     }
 
@@ -662,13 +672,13 @@ void compareFieldMaps()
         c->cd(2); hCurlB_calc->Draw("COLZ");
         c->cd(3); hDivB_meas ->Draw("COLZ");
         c->cd(4); hCurlB_meas->Draw("COLZ");
-        SaveClose(c, "plots/11_maxwell_residuals.pdf");
+        SaveClose(c, Form("%s/11_maxwell_residuals.pdf", OUTDIR));
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // 8. Save all histograms to a ROOT file
     // ─────────────────────────────────────────────────────────────────────────
-    TFile *fOut = TFile::Open("plots/comparison_histograms.root", "RECREATE");
+    TFile *fOut = TFile::Open(Form("%s/comparison_histograms.root", OUTDIR), "RECREATE");
     hBz_meas->Write(); hBz_calc->Write(); hdBz->Write();
     hBr_meas->Write(); hBr_calc->Write(); hdBr->Write();
     hBp_m0->Write();   hBp_A1->Write();   hBp_ph->Write();
@@ -677,7 +687,7 @@ void compareFieldMaps()
     hDivB_calc->Write(); hCurlB_calc->Write();
     hDivB_meas->Write(); hCurlB_meas->Write();
     fOut->Close();
-    printf("  -> plots/comparison_histograms.root\n");
+    printf("  -> %s/", OUTDIR); printf("comparison_histograms.root\n");
 
     // ─────────────────────────────────────────────────────────────────────────
     // 9. Numerical summary
@@ -736,10 +746,10 @@ void compareFieldMaps()
             }
         double sc = 1e3/std::sqrt((double)n);   // T/cm → mT/cm, /sqrt(n)
         printf("\n  Maxwell residuals (r > 0, tracking volume):\n");
-        printf("  OPERA     |div B|:        max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
-               maxDivC*1e3,  std::sqrt(rmssDivC )*sc);
-        printf("  OPERA     |curl B|:       max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
-               maxCurlC*1e3, std::sqrt(rmssCurlC)*sc);
+        printf("  %-9s |div B|:        max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
+               LABEL, maxDivC*1e3,  std::sqrt(rmssDivC )*sc);
+        printf("  %-9s |curl B|:       max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
+               LABEL, maxCurlC*1e3, std::sqrt(rmssCurlC)*sc);
         printf("  Measured  |div B|:        max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
                maxDivM*1e3,  std::sqrt(rmssDivM )*sc);
         printf("  Measured  |(curl B)_phi|: max = %7.3f mT/cm,  RMS = %7.4f mT/cm\n",
