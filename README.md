@@ -133,13 +133,30 @@ root -l -b -q 'makeMeasuredCartesianMap.C+'
 
 Output: `output/sphenix_measured_fieldmap_cartesian.root` — same `fieldmap` TNtuple, same branches (`x:y:z:bx:by:bz:hz`), same units (cm, T), same grid layout.
 
-At each grid node `(x, y, z)` the macro calls `sPHENIXFieldMap::GetFieldXYZ(x·10, y·10, z·10, Bx, By, Bz)` (converting cm to mm), so the output inherits all properties of the measured map:
+At each grid node `(x, y, z)` the macro calls `sPHENIXFieldMap::GetFieldXYZ(x·10, y·10, z·10, Bx, By, Bz)` (converting cm to mm), so the output inherits the physical properties of the measured map:
 - Ground-truth hardware measurement from CERN acceptance testing
-- Satisfies ∇·B = 0 by construction
 - Correct axial position (peak at z = −24 cm) and field amplitude (1.3975 T)
 - Azimuthally symmetric: Bφ = 0
+- No spurious tilt (m=1 amplitudes < 0.01 mT throughout the tracking volume)
 
 Of 1,367,631 grid points, 661,560 (48%) lie at r > 900 mm and receive zero field — these are corners of the Cartesian cube well outside the tracking volume (r < ~70 cm).
+
+### Self-consistency check
+
+`compareFieldMaps.C` was run with the measured Cartesian map in place of OPERA to verify the conversion and characterise the round-trip interpolation error (cylindrical bilinear → Cartesian grid → trilinear).  Results in `plots_meas_cartesian/`.
+
+| Quantity | OPERA vs Measured | Meas. Cartesian vs Measured |
+|---|---|---|
+| On-axis ΔBz at z = 0 | −9.1 mT | 0.0 mT |
+| Max \|ΔBz\| in tracking volume | 105.5 mT | **0.3 mT** |
+| Max \|ΔBr\| | 74.0 mT | **0.0 mT** |
+| Bz m=1 amplitude | 0.93 mT | **0.00 mT** |
+| \|∇·B\| max | 334 mT/cm | 349 mT/cm |
+| \|∇×B\| max | 35 mT/cm | 49 mT/cm |
+
+The 0.3 mT max ΔBz is the round-trip interpolation error; all m=1 amplitudes are consistent with noise (phase spread 105°, only 68 cells above threshold), confirming there is no spurious azimuthal structure in the converted map.
+
+The ∇·B residual of the measured Cartesian map (349 mT/cm) is essentially the same as OPERA (334 mT/cm).  This is expected: storing any smooth field on independent Cartesian trilinear grids introduces ∇·B violations at this level regardless of whether the source was Maxwell-consistent in cylindrical coordinates.  The cylindrical divergence-free property does not survive resampling onto a Cartesian grid with independent component interpolation.  A truly divergence-free Cartesian representation would require a different storage scheme (staggered grid, vector potential, or post-processing to enforce ∇·B = 0 in the Cartesian basis).
 
 ## How to Run
 
@@ -155,12 +172,26 @@ Of 1,367,631 grid points, 661,560 (48%) lie at r > 900 mm and receive zero field
   ```
 
 ### Running the comparison
+
+`compareFieldMaps()` accepts three optional arguments:
+
+| Argument | Default | Description |
+|---|---|---|
+| `calcRoot` | OPERA file in `fieldmap-used-in-analysis/` | Path to the Cartesian TNtuple to compare against the measured map |
+| `calcLabel` | `"OPERA"` | Label used in histogram titles and legend entries |
+| `outDir` | `"plots"` | Output directory for PDFs and ROOT file |
+
+**OPERA vs measured** (default):
 ```bash
-mkdir -p plots
 root -l -b -q 'compareFieldMaps.C+'
 ```
 
-Output: eleven PDF plots in `plots/` and `plots/comparison_histograms.root`.
+**Measured Cartesian vs measured** (self-consistency check):
+```bash
+root -l -b -q 'compareFieldMaps.C+("output/sphenix_measured_fieldmap_cartesian.root","Meas. Cartesian","plots_meas_cartesian")'
+```
+
+Output: eleven PDF plots and `comparison_histograms.root` in the specified directory.
 
 ### Output plots
 
@@ -190,11 +221,12 @@ Output: `output/sphenix_measured_fieldmap_cartesian.root`
 
 ```
 cern-opera-comparison/
-├── compareFieldMaps.C              # Comparison macro (produces plots/)
+├── compareFieldMaps.C              # Comparison macro (parameterised; see How to Run)
 ├── makeMeasuredCartesianMap.C      # Converts measured map to OPERA Cartesian format
 ├── sphenix-cernfinal-map/          # git submodule (sPHENIXFieldMap class + CSV data)
+├── plots/                          # OPERA vs measured: PDFs and comparison_histograms.root
+├── plots_meas_cartesian/           # Meas. Cartesian vs measured: self-consistency check
 ├── fieldmap-used-in-analysis/      # (not tracked) place OPERA ROOT file here
-├── plots/                          # (not tracked) output PDFs and histograms
 └── output/                         # (not tracked) output of makeMeasuredCartesianMap.C
 ```
 
