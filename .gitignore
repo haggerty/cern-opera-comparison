@@ -8,6 +8,7 @@ fieldmap-used-in-analysis/*.root
 
 # Output ROOT files from the comparison
 plots/*.root
+output/*.root
 
 # macOS metadata
 .DS_Store
