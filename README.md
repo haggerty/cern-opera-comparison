@@ -295,3 +295,11 @@ cern-opera-comparison/
 - [ROOT](https://root.cern) — data containers, interpolation, histogramming
 - [`haggerty/sphenix-cernfinal-map`](https://github.com/haggerty/sphenix-cernfinal-map) — `sPHENIXFieldMap` C++ class and raw CSV data
 - OPERA field map: `8e4d6c3b1660540a658da3a275af2bde_sphenix3dtrackingmapxyz.root` (not publicly distributed; contact sPHENIX offline group)
+
+## Next Steps
+
+The natural follow-on is to measure the effect on tracking by switching from the OPERA map to the measured field map.  The drop-in replacement (`output/sphenix_measured_fieldmap_cartesian.root`) uses the identical TNtuple format, so it can be pointed at by `PHField3DCartesian` with a one-line config change.  Three differences are expected to matter:
+
+1. **28 cm z-offset** — the measured Bz peak is at z = −24 cm vs z = +4 cm in OPERA.  This is the dominant discrepancy and will shift the sagitta correction for all tracks.
+2. **∇·B residuals** — the measured Cartesian map has the same ~350 mT/cm divergence residual as OPERA (inherent to independent-component trilinear storage), so this is a wash unless the field integrator is changed.
+3. **Spurious tilt removed** — OPERA contains a ~4.1 mrad dipole toward −y that is absent from the measured map.  Removing it could reduce the φ-dependence of tracking residuals.
