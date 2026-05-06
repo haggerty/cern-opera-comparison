@@ -97,6 +97,9 @@ The peak on-axis Bz occurs at **z = −24 cm** in the measured map and **z = +4 
 ### Central-region agreement
 Within |z| < 60 cm (the tracking volume), the maximum azimuthally-averaged difference |ΔBz| = 35.5 mT — good agreement once the z-offset is accounted for qualitatively.
 
+### Br sign change at the Bz peak
+Br changes sign at **z = −24 cm**, the same location as the Bz peak, to within 1 µT.  This is required by ∇·B = 0: because `EnforceMaxwell()` computes Br from the integral of ∂Bz/∂z, Br = 0 wherever ∂Bz/∂z = 0 — i.e., at the Bz maximum.  At r = 25 mm the values straddle zero symmetrically: Br = −0.000032 T at z = −26 cm, ≈ 0 at z = −24 cm, and +0.000029 T at z = −22 cm.
+
 ### Bφ
 Essentially zero in both maps (< 0.1 mT in the tracking volume center), consistent with azimuthal symmetry.
 
