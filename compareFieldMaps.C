@@ -27,6 +27,7 @@
 #include "TCanvas.h"
 #include "TLegend.h"
 #include "TLine.h"
+#include "TLatex.h"
 #include "TStyle.h"
 #include "TColor.h"
 #include "TROOT.h"
@@ -613,7 +614,7 @@ void compareFieldMaps(const char *calcRoot  = nullptr,
         gBrP->SetLineColor(kRed); gBrP->SetLineWidth(2);
         gBpP->SetLineColor(kRed); gBpP->SetLineWidth(2);
 
-        TCanvas *c = new TCanvas("c09", "", 1500, 430);
+        TCanvas *c = new TCanvas("c09", "", 1500, 560);
         c->Divide(3, 1);
 
         auto DrawPhi = [&](int pad, TGraph *g, double measVal,
@@ -621,10 +622,12 @@ void compareFieldMaps(const char *calcRoot  = nullptr,
             c->cd(pad);
             gPad->SetLeftMargin(0.17);
             gPad->SetRightMargin(0.04);
-            g->SetTitle(Form("%s vs #phi  (r=%.0f cm, z=%.0f cm);#phi (deg);%s",
-                             yl, R_SAMP, Z_SAMP, yl));
+            gPad->SetTopMargin(0.22);
+            gPad->SetBottomMargin(0.13);
+            // Suppress built-in title; draw it manually in the top margin
+            g->SetTitle(Form(";#phi (deg);%s", yl));
             g->Draw("AL");
-            // Expand y-axis to include measVal if it falls outside the auto-scaled range
+            // Expand y-axis to include measVal with symmetric padding
             TH1F *axh = g->GetHistogram();
             double ylo = std::min(axh->GetMinimum(), measVal);
             double yhi = std::max(axh->GetMaximum(), measVal);
@@ -632,11 +635,18 @@ void compareFieldMaps(const char *calcRoot  = nullptr,
             axh->SetMinimum(ylo - ymargin);
             axh->SetMaximum(yhi + ymargin);
             axh->GetYaxis()->SetTitleOffset(1.6);
-            g->Draw("AL");  // redraw with updated axis
+            g->Draw("AL");
             TLine *ml = new TLine(0., measVal, 350., measVal);
             ml->SetLineColor(kBlue); ml->SetLineWidth(2); ml->SetLineStyle(2);
             ml->Draw();
-            TLegend *leg = new TLegend(0.55, 0.08, 0.97, 0.23);
+            // Panel label and legend sit in the top margin above the frame
+            TLatex *tt = new TLatex(0.5, 0.92,
+                Form("%s vs #phi  (r=%.0f cm, z=%.0f cm)", yl, R_SAMP, Z_SAMP));
+            tt->SetNDC(); tt->SetTextAlign(22); tt->SetTextSize(0.052); tt->Draw();
+            TLegend *leg = new TLegend(0.17, 0.79, 0.97, 0.91);
+            leg->SetBorderSize(0);
+            leg->SetFillStyle(0);
+            leg->SetTextSize(0.046);
             leg->AddEntry(g,  LABEL,                  "l");
             leg->AddEntry(ml, "Measured (#phi-avg)", "l");
             leg->Draw();
