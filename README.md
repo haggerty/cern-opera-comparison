@@ -98,7 +98,16 @@ The peak on-axis Bz occurs at **z = −24 cm** in the measured map and **z = +4 
 Within |z| < 60 cm (the tracking volume), the maximum azimuthally-averaged difference |ΔBz| = 35.5 mT — good agreement once the z-offset is accounted for qualitatively.
 
 ### Br sign change at the Bz peak
-Br changes sign at **z = −24 cm**, the same location as the Bz peak, to within 1 µT.  This is required by ∇·B = 0: because `EnforceMaxwell()` computes Br from the integral of ∂Bz/∂z, Br = 0 wherever ∂Bz/∂z = 0 — i.e., at the Bz maximum.  At r = 25 mm the values straddle zero symmetrically: Br = −0.000032 T at z = −26 cm, ≈ 0 at z = −24 cm, and +0.000029 T at z = −22 cm.
+In both maps, Br changes sign at the same z as the Bz peak, to within a few µT.
+
+| Map | Bz peak | Br zero-crossing | Coincidence |
+|-----|---------|-----------------|-------------|
+| Measured | z = −24 cm, 1.39754 T | z = −24 cm | within 1 µT |
+| OPERA | z = +4 cm, 1.38486 T | z = +4 cm | within 4 µT |
+
+For the measured map this is required by construction: `EnforceMaxwell()` derives Br from the integral of ∂Bz/∂z, so Br = 0 wherever ∂Bz/∂z = 0 — i.e., at the Bz maximum.  At r = 25 mm: Br = −0.000032 T at z = −26 cm, ≈ 0 at z = −24 cm, and +0.000029 T at z = −22 cm.
+
+For the OPERA map the same coincidence holds (Br = −0.000026 T at z = +2 cm, ≈ 0 at z = +4 cm, +0.000033 T at z = +6 cm) even though OPERA violates ∇·B = 0 at the ~40 mT/cm level overall.  This is because the ∇·B violations arise from curvature terms (second derivatives), while the Br zero-crossing at the Bz peak is a first-derivative condition — Br ∝ ∫∂Bz/∂z dr changes sign where ∂Bz/∂z = 0.  That relationship is preserved even when the radial balance of ∂(rBr)/∂r and ∂Bz/∂z is imperfect.
 
 ### Bφ
 Essentially zero in both maps (< 0.1 mT in the tracking volume center), consistent with azimuthal symmetry.
