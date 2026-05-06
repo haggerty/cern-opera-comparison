@@ -112,44 +112,41 @@ For the OPERA map the same coincidence holds (Br = −0.000026 T at z = +2 cm, �
 ### Bφ
 Essentially zero in both maps (< 0.1 mT in the tracking volume center), consistent with azimuthal symmetry.
 
-### Solenoid axis tilt in the raw measured data
+### Solenoid axis tilt
 
-The macro `checkTilt.C` reads the raw measurement CSVs directly (before azimuthal averaging) and extracts the m=1 Fourier component of Bz by fitting Bz(φ) = A₀ + A₁ cos φ + B₁ sin φ in each (r, z) bin using least squares.  The fine map provides 18–31 azimuthal measurements per bin — sufficient for a clean m=1 extraction.
+**Method (`checkTilt.C`):** reads the raw measurement CSVs directly (before azimuthal averaging) and fits Bz(φ) = A₀ + A₁ cos φ + B₁ sin φ per (r, z) bin by least squares.  The fine map provides 18–31 azimuthal measurements per bin — sufficient for a clean m=1 extraction.
 
-```bash
-root -l -b -q 'checkTilt.C+'
-```
-
-Output: six PDFs in `plots_tilt/`.
-
-**Tilt signature:** for a solenoid axis tilted by angle α toward azimuth φ₀, the m=1 amplitude of Bz is:
+**Tilt signature:** for a solenoid axis tilted by angle α toward azimuth φ₀ the first-order m=1 perturbation is:
 ```
 ΔBz ≈ −(∂Bz/∂r) · (z − z_center) · α · cos(φ − φ₀)
 ```
-The key discriminants vs. a pure axis translation are: (1) the m=1 amplitude reverses sign at z = z_center (the field maximum), and (2) it grows linearly with |z − z_center|.
+Key discriminants vs. a pure axis translation: (1) the amplitude reverses sign at z = z_center (the field maximum, where ∂Bz/∂r → 0); (2) it grows with |z − z_center|.  A translation would give constant phase and amplitude with no sign reversal.
 
-**Result at r = 300 mm:**
+**Measured data result at r = 300 mm:**
 
 | z (cm) | A₀ (T) | A₁ (mT) | A₁/A₀ (%) | phase (°) |
 |--------|--------|---------|-----------|----------|
 | −100 | 1.354 | 2.38 | 0.18 | −67 |
-| −50 | 1.397 | 0.25 | 0.02 | −65 |
-| −24 | 1.401 | 0.40 | 0.03 | +44 |
-| 0 | 1.398 | 0.68 | 0.05 | +64 |
-| +50 | 1.359 | 2.42 | 0.18 | +76 |
+| −50  | 1.397 | 0.25 | 0.02 | −65 |
+| −24  | 1.401 | 0.40 | 0.03 | +44 (near zero-crossing) |
+|   0  | 1.398 | 0.68 | 0.05 | +64 |
+| +50  | 1.359 | 2.42 | 0.18 | +76 |
 | +100 | 1.216 | 4.77 | 0.39 | +84 |
 | +140 | 1.006 | 4.82 | 0.48 | +101 |
 
-The amplitude minimum occurs near z ≈ −24 cm — the Bz peak, where ∂Bz/∂r ≈ 0, exactly where the tilt signal is expected to vanish.  For z > 0 the phase is consistently **+75° ± 15°**, matching the survey direction of **+71°**.  For z < −50 cm the phase is **−70° ± 10°**, i.e., reversed by ~145° — close to the 180° sign flip expected for a tilt as one crosses the field center.  The amplitude grows with |z − z_center| on both sides.  This pattern is characteristic of a rigid-body axis tilt rather than a parallel translation (which would give a z-independent phase and no sign reversal).
+The amplitude minimum is at z ≈ −24 cm (the Bz peak), as expected.  For z > 0 the phase is consistently **+75° ± 15°**.  For z < −50 cm the phase is **−70° ± 10°** — reversed by ~145°, close to the 180° flip expected for a tilt.  Both the sign reversal and the growing amplitude with |z − z_center| confirm a rigid-body tilt rather than a translation.
 
-**Conclusion:** the raw CERN measurement data shows an m=1 azimuthal asymmetry in Bz that is consistent with a solenoid axis tilt of the surveyed magnitude (~2.39 mrad) toward φ₀ ≈ **+71°** — essentially toward **+y**.
+**OPERA map result:** the OPERA Bz m=1 amplitude scales linearly with r — A1/r ≈ **0.0095 mT/cm**, constant phase **−86°** — also a tilt signature, implying ~4.1 mrad toward −y.
 
-### Effective tilt in the OPERA map (m=1 diagnostic)
-The OPERA map's Bz m=1 amplitude scales linearly with r: **A1/r ≈ 0.0095 mT/cm** (constant across all r at a given z), and the m=1 phase is constant at **−86°** across the (r, z) plane.
+**Comparison:**
 
-This is the signature of a rigid-body tilt.  The implied effective tilt is **~4.1 mrad** toward **−y** (phase −86°, nearly the −y direction).
+| Source | m=1 phase | Implied direction | Amplitude |
+|--------|-----------|-------------------|-----------|
+| Physical survey | +71° | +y (upward) | 2.39 mrad |
+| Raw measured data (z > 0) | **+75°** | +y ✓ | consistent |
+| OPERA calculation | **−86°** | −y ✗ | ~4.1 mrad spurious |
 
-The physical sPHENIX solenoid was surveyed to be tilted **2.39 mrad** toward **+y** (phase +71°), and the raw measured data confirms a tilt in approximately that direction (§ above).  The OPERA dipole at −86° points **nearly opposite** to the survey direction (157° away) and does not appear to incorporate the measured solenoid tilt.
+The OPERA dipole points **157° away** from the survey direction and does not reproduce the physical tilt.  The sPHENIXFieldMap discards φ information during loading, so the measured Cartesian map (and tracking using it) is azimuthally symmetric — the tilt-induced ~0.2–0.5% Bz asymmetry is not preserved.
 
 ### Maxwell residuals
 
@@ -252,6 +249,23 @@ Output: eleven PDF plots and `comparison_histograms.root` in the specified direc
 | `09_phi_dependence_r30_z0.pdf` | OPERA φ dependence at r=30 cm, z=0 |
 | `10_dBz_phi0_vs_phi180.pdf` | ΔBz at φ=0° vs φ=180° (asymmetry check) |
 | `11_maxwell_residuals.pdf` | ∇·B and ∇×B residuals for OPERA and measured maps |
+
+### Running the tilt analysis
+
+```bash
+root -l -b -q 'checkTilt.C+'
+```
+
+Output: six PDFs in `plots_tilt/`.  No OPERA file required — reads only the raw measurement CSVs.
+
+| File | Contents |
+|------|----------|
+| `tilt_A_nphi_per_bin.pdf` | N(φ) measurements per (r, z) bin — shows azimuthal coverage |
+| `tilt_B_m1_frac_map.pdf` | A₁/A₀ in the (z, r) plane |
+| `tilt_C_m1_abs_map.pdf` | A₁ in mT in the (z, r) plane |
+| `tilt_D_phase_map.pdf` | m=1 phase in the (z, r) plane |
+| `tilt_E_phase_vs_z.pdf` | Phase vs z profiles at r = 50, 100, 200, 300, 450 mm with survey and OPERA reference lines |
+| `tilt_F_amplitude_vs_z.pdf` | A₁/A₀ vs z profiles at the same r values |
 
 ### Producing the measured Cartesian map
 ```bash
