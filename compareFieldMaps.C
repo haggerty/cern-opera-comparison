@@ -622,6 +622,13 @@ void compareFieldMaps(const char *calcRoot  = nullptr,
             g->SetTitle(Form("%s vs #phi  (r=%.0f cm, z=%.0f cm);#phi (deg);%s",
                              yl, R_SAMP, Z_SAMP, yl));
             g->Draw("AL");
+            // Expand y-axis to include measVal if it falls outside the auto-scaled range
+            TH1F *axh = g->GetHistogram();
+            double ylo = axh->GetMinimum(), yhi = axh->GetMaximum();
+            double ymargin = 0.15 * (yhi - ylo);
+            if (measVal < ylo) axh->SetMinimum(measVal - ymargin);
+            if (measVal > yhi) axh->SetMaximum(measVal + ymargin);
+            g->Draw("AL");  // redraw with updated axis
             TLine *ml = new TLine(0., measVal, 350., measVal);
             ml->SetLineColor(kBlue); ml->SetLineWidth(2); ml->SetLineStyle(2);
             ml->Draw();
