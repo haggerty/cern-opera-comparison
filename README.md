@@ -296,6 +296,20 @@ cern-opera-comparison/
 - [`haggerty/sphenix-cernfinal-map`](https://github.com/haggerty/sphenix-cernfinal-map) — `sPHENIXFieldMap` C++ class and raw CSV data
 - OPERA field map: `8e4d6c3b1660540a658da3a275af2bde_sphenix3dtrackingmapxyz.root` (not publicly distributed; contact sPHENIX offline group)
 
+## PHField3DCartesian Fidelity
+
+`PHField3DCartesian` (the interpolator used by the sPHENIX reconstruction framework) was reviewed to confirm it will reproduce the measured field when given `sphenix_measured_fieldmap_cartesian.root`.
+
+**Branch reading:** the code reads `bx`, `by`, `bz` from the TNtuple — exactly the branches our file provides.
+
+**Unit conversion:** positions are multiplied by the Geant4 `cm` constant (converting the file's centimeter values to Geant4 internal millimeter units); fields are multiplied by `tesla * magfield_rescale`.  Our file stores fields in Tesla, so the conversion is correct provided `magfield_rescale = 1.0` in the run configuration (the default).
+
+**Interpolation:** `PHField3DCartesian` performs standard trilinear interpolation over the eight surrounding grid nodes, located via `std::set::lower_bound()`.  The formula — all eight combinations of `(f, 1−f)` for the three coordinates — is mathematically identical to the `CalcInterp` function in `compareFieldMaps.C` that was used for the self-consistency check.  Because the interpolation is the same, `PHField3DCartesian` will reproduce the measured cylindrical map with the same ≤ 0.3 mT accuracy established by that check.
+
+**∇·B caveat:** storing Bx, By, Bz as three independent trilinear grids violates ∇·B at the ~350 mT/cm level regardless of the source map.  This is a property of the PHField3DCartesian storage format; the measured map is no worse than OPERA in this respect (see Maxwell residuals table above).
+
+**Summary:** a one-line config change pointing `PHField3DCartesian` at `sphenix_measured_fieldmap_cartesian.root` (with default `magfield_rescale = 1.0`) will deliver the measured field values to ≤ 0.3 mT accuracy throughout the tracking volume.
+
 ## Next Steps
 
 The natural follow-on is to measure the effect on tracking by switching from the OPERA map to the measured field map.  The drop-in replacement (`output/sphenix_measured_fieldmap_cartesian.root`) uses the identical TNtuple format, so it can be pointed at by `PHField3DCartesian` with a one-line config change.  Three differences are expected to matter:
