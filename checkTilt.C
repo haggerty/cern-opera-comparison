@@ -240,16 +240,16 @@ void checkTilt(
     }
     // E: phase vs z at selected r values
     {
-        auto* c=new TCanvas("cPhZ","",900,550);
+        auto* c=new TCanvas("cPhZ","",900,600);
         c->SetGrid();
-        TLegend* leg=new TLegend(0.15,0.12,0.42,0.38);
+        gPad->SetTopMargin(0.24);
+        gPad->SetBottomMargin(0.12);
         bool first=true;
         for (int k=0;k<nSel;++k) {
             if (pPhZ[k]->GetEntries()<1) continue;
-            pPhZ[k]->SetTitle("Measured map: m=1 Bz phase vs z");
+            pPhZ[k]->SetTitle(";z (cm);m=1 phase (deg)");
             pPhZ[k]->GetYaxis()->SetRangeUser(-200.,200.);
             pPhZ[k]->Draw(first ? "E" : "E SAME");
-            leg->AddEntry(pPhZ[k],Form("r = %.0f mm",kRMin+selIR[k]*kdR),"lp");
             first=false;
         }
         // Reference lines
@@ -257,9 +257,19 @@ void checkTilt(
         auto* lOPER=new TLine(-270.,-86.,210.,-86.);
         lSurv->SetLineStyle(2); lSurv->SetLineColor(kCyan+2);   lSurv->Draw();
         lOPER->SetLineStyle(2); lOPER->SetLineColor(kOrange+1); lOPER->Draw();
-        TLatex lt; lt.SetTextSize(0.03);
+        TLatex lt; lt.SetTextSize(0.033);
         lt.SetTextColor(kCyan+2);  lt.DrawLatex(-260., 80.,"Survey: #phi_{0}=+71#circ");
         lt.SetTextColor(kOrange+1);lt.DrawLatex(-260.,-98.,"OPERA:  #phi_{0}=#minus86#circ");
+        // Title and legend in top margin
+        TLatex tt; tt.SetNDC(); tt.SetTextAlign(22);
+        tt.SetTextSize(0.042); tt.SetTextFont(42);
+        tt.DrawLatex(0.5, 0.945, "Measured map: m=1 Bz phase vs z");
+        TLegend* leg=new TLegend(0.08,0.76,0.92,0.92);
+        leg->SetNColumns(4);
+        leg->SetBorderSize(0); leg->SetFillStyle(0); leg->SetTextSize(0.038);
+        for (int k=0;k<nSel;++k)
+            if (pPhZ[k]->GetEntries()>0)
+                leg->AddEntry(pPhZ[k],Form("r = %.0f mm",kRMin+selIR[k]*kdR),"lp");
         leg->Draw();
         SaveClose(c, Form("%s/tilt_E_phase_vs_z.pdf",outDir));
     }
