@@ -200,7 +200,7 @@ void checkTilt(
         for (int k=0;k<nSel;++k) {
             if (ir==selIR[k]) {
                 pPhZ[k]->Fill(z_cm,ph);
-                pA1Z[k]->Fill(z_cm,frac);
+                if (A0>0.5) pA1Z[k]->Fill(z_cm,frac);
             }
         }
     }
@@ -272,6 +272,7 @@ void checkTilt(
         for (int k=0;k<nSel;++k) {
             if (pA1Z[k]->GetEntries()<1) continue;
             pA1Z[k]->SetTitle("Measured map: m=1/m=0 amplitude vs z");
+            if (first) pA1Z[k]->SetMaximum(0.015);
             pA1Z[k]->Draw(first ? "E" : "E SAME");
             leg->AddEntry(pA1Z[k],Form("r = %.0f mm",kRMin+selIR[k]*kdR),"lp");
             first=false;
