@@ -154,10 +154,10 @@ void checkTilt(
     TH2D* hPhase =new TH2D("hPhase", "m=1 phase (deg);z (cm);r (mm)",
                             kNZ,zlo,zhi, kNR,rlo,rhi);
 
-    // Profiles at selected r nodes (r = 50, 100, 200, 300, 450 mm)
-    const int selIR[]={2,4,8,12,18};
-    const int nSel=5;
-    int colors[]={kBlue+1,kRed+1,kGreen+2,kMagenta+1,kOrange+2};
+    // Profiles at selected r nodes (r = 50, 100, 200, 300, 450, 600, 750, 800 mm)
+    const int selIR[]={2,4,8,12,18,24,30,32};
+    const int nSel=8;
+    int colors[]={kBlue+1,kRed+1,kGreen+2,kMagenta+1,kOrange+2,kCyan+2,kViolet+1,kGray+2};
     TProfile *pPhZ[nSel], *pA1Z[nSel];
     for (int k=0;k<nSel;++k) {
         int ir=selIR[k];
