@@ -27,7 +27,7 @@ The macro `compareFieldMaps.C` is a self-contained ROOT macro compiled with ACLi
 
 | Dimension | Range | Step | Points |
 |-----------|-------|------|--------|
-| r | 0–75 cm | 2.5 cm | 31 |
+| r | 0–80 cm | 2.5 cm | 33 |
 | φ | 0°–350° | 10° | 36 |
 | z | −110–+110 cm | 2 cm | 111 |
 
@@ -154,8 +154,8 @@ The macro evaluates ∇·B and ∇×B numerically for each map at all (r > 0) po
 
 | Map | |∇·B| max | |∇·B| RMS | |∇×B| max | |∇×B| RMS |
 |-----|-----------|-----------|-----------|-----------|
-| Measured | 0.017 mT/cm | 0.003 mT/cm | 0.302 mT/cm | 0.065 mT/cm |
-| OPERA | 334 mT/cm | 43 mT/cm | 35 mT/cm | 2.6 mT/cm |
+| Measured | 0.027 mT/cm | 0.003 mT/cm | 0.320 mT/cm | 0.070 mT/cm |
+| OPERA | 338 mT/cm | 43 mT/cm | 37 mT/cm | 2.8 mT/cm |
 
 **Measured map**: ∇·B ≈ 0 to better than 0.02 mT/cm — consistent with machine precision — confirming that `EnforceMaxwell()` enforces the divergence condition correctly on the discrete grid.  The non-zero curl (max 0.3 mT/cm, RMS 0.065 mT/cm) is real: the measured Bz contains field structure that is not curl-free at the ~0.05% level, from a combination of measurement noise and genuine field non-idealities.
 
@@ -180,7 +180,7 @@ At each grid node `(x, y, z)` the macro calls `sPHENIXFieldMap::GetFieldXYZ(x·1
 - Azimuthally symmetric: Bφ = 0
 - No spurious tilt (m=1 amplitudes < 0.01 mT throughout the tracking volume)
 
-Of 1,367,631 grid points, 661,560 (48%) lie at r > 900 mm and receive zero field — these are corners of the Cartesian cube well outside the tracking volume (r < ~70 cm).
+Of 1,367,631 grid points, 661,560 (48%) lie at r > 900 mm and receive zero field — these are corners of the Cartesian cube well outside the tracking volume (r < ~80 cm).
 
 ### Self-consistency check
 
@@ -189,11 +189,11 @@ Of 1,367,631 grid points, 661,560 (48%) lie at r > 900 mm and receive zero field
 | Quantity | OPERA vs Measured | Meas. Cartesian vs Measured |
 |---|---|---|
 | On-axis ΔBz at z = 0 | −9.1 mT | 0.0 mT |
-| Max \|ΔBz\| in tracking volume | 105.5 mT | **0.3 mT** |
-| Max \|ΔBr\| | 74.0 mT | **0.0 mT** |
-| Bz m=1 amplitude | 0.93 mT | **0.00 mT** |
-| \|∇·B\| max | 334 mT/cm | 349 mT/cm |
-| \|∇×B\| max | 35 mT/cm | 49 mT/cm |
+| Max \|ΔBz\| in tracking volume | 106.7 mT | **0.4 mT** |
+| Max \|ΔBr\| | 82.3 mT | **0.0 mT** |
+| Bz m=1 amplitude | 1.00 mT | **0.00 mT** |
+| \|∇·B\| max | 338 mT/cm | 352 mT/cm |
+| \|∇×B\| max | 37 mT/cm | 54 mT/cm |
 
 The 0.3 mT max ΔBz is the round-trip interpolation error; all m=1 amplitudes are consistent with noise (phase spread 105°, only 68 cells above threshold), confirming there is no spurious azimuthal structure in the converted map.
 

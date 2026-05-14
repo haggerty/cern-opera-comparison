@@ -202,13 +202,13 @@ void compareFieldMaps(const char *calcRoot  = nullptr,
     // ─────────────────────────────────────────────────────────────────────────
     // 3. Comparison grid
     //
-    //   r:   0, 2.5, 5, ..., 75 cm  (NR=31, matches measured-map r-step)
+    //   r:   0, 2.5, 5, ..., 80 cm  (NR=33, covers full tracking volume)
     //   phi: 36 azimuths, 10-deg apart
     //   z:   −110 to +110 cm, 2-cm steps  (NZ=111)
     //        → overlap of measured (−270..+210 cm) and analysis (−110..+110 cm)
     //        → 2-cm step matches both grids exactly
     // ─────────────────────────────────────────────────────────────────────────
-    const int    NR  = 31;    // r = 0, 2.5, ..., 75 cm
+    const int    NR  = 33;    // r = 0, 2.5, ..., 80 cm
     const int    NZ  = 111;   // z = −110, −108, ..., +110 cm
     const int    NP  = 36;    // phi = 0, 10, ..., 350 deg
     const double DR  = 2.5;   // cm
